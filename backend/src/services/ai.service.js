@@ -1,65 +1,42 @@
-import "dotenv/config"
+import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatMistralAI } from "@langchain/mistralai"
-import readline from "readline/promises";
-import { HumanMessage, tool, createAgent } from "langchain";
-import chalk from "chalk";
-import * as z from "zod";
-import { sendEmail } from "./mail.service.js";
-import { tavilySearch } from "./tavily.service.js"
-// import { tavily } from "@tavily/core";
+import { HumanMessage, SystemMessage, AIMessage } from "langchain";
 
-
-const emailTool = tool(
-  sendEmail,
-  {
-    name: "emailTool",
-    description: "Use this tool to send an email.",
-    schema: z.object({
-      to: z.string().describe("The recipient's email address"),
-      subject: z.string().describe("The subject of the email"),
-      html: z.string().describe("The HTML content of the email"),
-    })
-  }
-)
-const tavilyTool = tool(
-  tavilySearch, {
-  name: "tavilySearch",
-  description: "Search the internet for current information and return results",
-  schema: z.object({
-    question: z.string().describe("The search query to look up on the internet")
-  })
-}
-)
-
-const messages = [];
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
+const geminiModel = new ChatGoogleGenerativeAI({
+  model: "gemini-2.5-flash-lite",
+  apiKey: process.env.GEMINI_API_KEY
 });
 
-const model = new ChatMistralAI({
+const mistralModel = new ChatMistralAI({
   model: "mistral-small-latest",
-});
-
-const agent = createAgent({
-  model,
-  tools: [emailTool, tavilyTool],
+  apiKey: process.env.MISTRAL_API_KEY
 })
 
-console.log(chalk.cyan.bold("\n  Mistral AI Chat\n"));
+export async function generateResponse(messages) {
+  const response = await geminiModel.invoke(messages.map(msg=>{
+    if(msg.role=="user"){
+      return new HumanMessage(msg.content)
+    }
+    else if(msg.role=="ai"){
+      return new AIMessage(msg.content)
+    }
+  }))
 
-while (true) {
-  const userInput = await rl.question(chalk.green("You: "));
+  return response.text
 
-  if (!userInput.trim()) continue;
+}
 
-  messages.push(new HumanMessage(userInput));
-  const response = await agent.invoke({
-    messages
-  });
-
-  messages.push(response.messages[response.messages.length - 1]);
-
-  console.log(chalk.cyan("Mistral: ") + response.messages[response.messages.length - 1].content + "\n");
+export async function generateChatTitle(message) {
+  const response = await mistralModel.invoke([
+    new SystemMessage(`
+            You are a helpful assistant that generates concise and descriptive titles for chat conversations.
+            
+            User will provide you with the first message of a chat conversation, and you will generate a title that captures the essence of the conversation in 2-4 words. The title should be clear, relevant, and engaging, giving users a quick understanding of the chat's topic.    
+        `),
+    new HumanMessage(`
+      Generate a title for a chat conversation based on the following first message:
+      "${message}"
+      `)
+  ])
+  return response.text
 }
