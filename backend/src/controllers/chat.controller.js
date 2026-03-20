@@ -22,7 +22,7 @@ export async function sendMessage(req, res) {
         content: message,
         role: "user"
     })
-    const messages = await messageModel.find({ chat: chatId })
+    const messages = await messageModel.find({ chat: chatId || chat._id})
 
     const result = await generateResponse(messages)
     
