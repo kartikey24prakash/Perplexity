@@ -1,101 +1,204 @@
-import React, { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React, { useEffect, useState, useRef } from 'react'
+import { useSelector } from 'react-redux'
 import { useChat } from '../hook/useChat'
+import ReactMarkdown from 'react-markdown'
+import './Dashboard.css'
 
+/* ── Typing dots ── */
+function TypingDots() {
+  return (
+    <div className="dash-typing">
+      <span /><span /><span />
+    </div>
+  )
+}
+
+/* ── Single message ── */
+function Message({ message }) {
+  const isUser = message.role === 'user'
+  return (
+    <div className={`dash-message dash-message--${isUser ? 'user' : 'ai'}`}>
+      {!isUser && <div className="dash-message__label">PERPLEXITY</div>}
+      <div className="dash-message__body">
+        <ReactMarkdown>{message.content}</ReactMarkdown>
+      </div>
+    </div>
+  )
+}
+
+/* ── Empty state ── */
+function EmptyState({ onChipClick }) {
+  const CHIPS = [
+    'How does LangChain work?',
+    'What is RAG architecture?',
+    'Compare GPT-4 vs Gemini',
+    'Latest AI research 2025',
+  ]
+  return (
+    <div className="dash-empty">
+      <h2 className="dash-empty__title">What do you want to know?</h2>
+      <div className="dash-empty__chips">
+        {CHIPS.map((chip, i) => (
+          <button key={i} className="dash-empty__chip" onClick={() => onChipClick(chip)}>
+            {chip}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ── Main Dashboard ── */
 const Dashboard = () => {
-  const chat =useChat()
+  const chat          = useChat()
   const [chatInput, setChatInput] = useState('')
-  const [userMessage, setUserMessage] = useState('')
-  // const [messages, setMessages] = useState('')
+  const [isTyping,  setIsTyping]  = useState(false)
+  const messagesEndRef = useRef(null)
 
-  const chats = useSelector((state)=>state.chat.chats)
-  const currentChatId =useSelector((state)=>state.chat.currentChatId)
+  const chats         = useSelector(state => state.chat.chats)
+  const currentChatId = useSelector(state => state.chat.currentChatId)
+  const user          = useSelector(state => state.auth.user)
 
   useEffect(() => {
-    chat.initializeSocketConnection(),
+    chat.initializeSocketConnection()
     chat.handleGetChats()
   }, [])
 
-  const handleSubmitMessage = (event) => {
-    event.preventDefault()
-    const trimmedMessage =chatInput.trim()
-    if(!trimmedMessage){
-      return
-    }
-    chat.handleSendMessage({message:trimmedMessage,chatId:currentChatId})  
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chats, currentChatId])
+
+  const currentMessages = chats[currentChatId]?.messages || []
+  const hasMessages     = currentMessages.length > 0
+
+  const handleSubmit = async (e) => {
+    e?.preventDefault()
+    const trimmed = chatInput.trim()
+    if (!trimmed) return
     setChatInput('')
+    setIsTyping(true)
+    await chat.handleSendMessage({ message: trimmed, chatId: currentChatId })
+    setIsTyping(false)
   }
 
-  const openChat =(chatId)=>{
-    chat.handleOpenChats(chatId)
-
+  const handleChipClick = async (msg) => {
+    setIsTyping(true)
+    await chat.handleSendMessage({ message: msg, chatId: currentChatId })
+    setIsTyping(false)
   }
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && chatInput.trim()) handleSubmit()
+  }
 
-
+  const openChat = (chatId) => {
+    chat.handleOpenChats(chatId, chats)
+  }
 
   return (
-    <main className='min-h-screen w-full bg-[#07090f] p-3 text-white md:p-5'>
-      <section className='mx-auto flex h-[calc(100vh-1.5rem)] w-full gap-4 rounded-3xl border p-1 md:h-[calc(100vh-2.5rem)] md:gap-6 md:p-1 border-none'>
+    <div className="dash-root">
 
-        <aside className='hidden h-full w-72 shrink-0 rounded-3xl border bg-[#080b12] p-4 md:flex md:flex-col'>
-          <h1 className='mb-5 text-3xl font-semibold tracking-tight'>Perplexity</h1>
-
-          <div className='space-y-2'>
-            {Object.values(chats).map((chat, index) => (
-              <button
-                onClick={()=>{openChat(chat.id)}}
-                key={index}
-                type='button'
-                className='w-full rounded-xl border border-white/60 bg-transparent px-3 py-2 text-left text-base font-medium text-white/90 transition hover:border-white hover:text-white'
-              >
-                
-                {chat.title}
-              </button>
-            ))}
+      {/* ── SIDEBAR ── */}
+      <aside className="dash-sidebar">
+        <div className="dash-sidebar__head">
+          <div className="dash-sidebar__logo">
+            <span className="dash-sidebar__mark">◈</span>
+            <span className="dash-sidebar__name">PERPLEXITY</span>
           </div>
-        </aside>
+          <button className="dash-sidebar__new" onClick={() => chat.handleNewChat?.()}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            New chat
+          </button>
+        </div>
 
-        <section className='relative max-w-3/5 mx-auto flex h-full min-w-0 flex-1 flex-col gap-4'>
+        {Object.values(chats).length > 0 && (
+          <>
+            <div className="dash-sidebar__section">Recent</div>
+            <div className="dash-sidebar__chat-list">
+              {Object.values(chats).map(item => (
+                <button
+                  key={item.id}
+                  className={`dash-sidebar__chat-item${item.id === currentChatId ? ' dash-sidebar__chat-item--active' : ''}`}
+                  onClick={() => openChat(item.id)}
+                >
+                  <span className="dash-sidebar__chat-dot" />
+                  <span className="dash-sidebar__chat-title">{item.title || 'New chat'}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
-          <div className='messages flex-1 space-y-3 overflow-y-auto pr-1 pb-30'>
-            {/* {console.log(messages)} */}
-            {chats[currentChatId]?.messages?.map((message) => (
-              <div
-                key={message.id}
-                className={`max-w-[82%] w-fit rounded-2xl px-4 py-3 text-sm md:text-base ${
-                  message.role === 'user'
-                    ? 'ml-auto rounded-br-none bg-white/12 text-white'
-                    : 'mr-auto border border-white/25 bg-[#0f1626] text-white/90'
-                }`}
-              >
-                <p>{message.content}</p>
-              </div>
-            ))}
+        <div className="dash-sidebar__spacer" />
+
+        <div className="dash-sidebar__footer">
+          <div className="dash-sidebar__user">
+            <div className="dash-sidebar__avatar">
+              {user?.name?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <div className="dash-sidebar__user-info">
+              <div className="dash-sidebar__user-name">{user?.name || 'User'}</div>
+              <div className="dash-sidebar__user-role">PREMIUM</div>
+            </div>
           </div>
+        </div>
+      </aside>
 
-          <footer className='rounded-3xl w-full absolute bottom-2 border border-white/60 bg-[#080b12] p-4 md:p-5'>
-            <form onSubmit={handleSubmitMessage} className='flex flex-col gap-3 md:flex-row'>
-              <input
-                type='text'
-                value={chatInput}
-                onChange={(event) => setChatInput(event.target.value)}
-                placeholder='Type your message...'
-                className='w-full rounded-2xl border border-white/50 bg-transparent px-4 py-3 text-lg text-white outline-none transition placeholder:text-white/45 focus:border-white/90'
-              />
-              <button
-                type='submit'
-                disabled={!chatInput.trim()}
-                className='rounded-2xl border border-white/60 px-6 py-3 text-lg font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50'
+      {/* ── MAIN ── */}
+      <div className="dash-main">
+        <div className="dash-content">
+          {!hasMessages ? (
+            <EmptyState onChipClick={handleChipClick} />
+          ) : (
+            <div className="dash-messages">
+              {currentMessages.map(message => (
+                <Message key={message.id} message={message} />
+              ))}
+              {isTyping && (
+                <div className="dash-message dash-message--ai">
+                  <div className="dash-message__label">PERPLEXITY</div>
+                  <TypingDots />
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
+        </div>
+
+        <div className="dash-searchbar">
+          <div className="dash-searchbar__box">
+            <input
+              className="dash-searchbar__input"
+              type="text"
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Message Perplexity..."
+            />
+            <button
+              className="dash-searchbar__button"
+              disabled={!chatInput.trim()}
+              onClick={handleSubmit}
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                stroke={chatInput.trim() ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.3)'}
               >
-                Send
-              </button>
-            </form>
-          </footer>
-        </section>
-
-      </section>
-    </main>
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 

@@ -50,18 +50,20 @@ export const useChat = () => {
         dispatch(setLoading(false))
     }
 
-    async function handleOpenChats(chatId) {
-        const data = await getMessages(chatId)
-        const { message } = data
+    async function handleOpenChats(chatId,chats) {
+        if (chats[chatId]?.messages.length === 0) {
+            const data = await getMessages(chatId)
+            const { message } = data
 
-        const formattedMessages = message.map(msg => ({
-            content: msg.content,
-            role: msg.role
-        }))
-        dispatch(addMessages({
-            chatId,
-            messages: formattedMessages
-        }))
+            const formattedMessages = message.map(msg => ({
+                content: msg.content,
+                role: msg.role
+            }))
+            dispatch(addMessages({
+                chatId,
+                messages: formattedMessages
+            }))
+        }
         dispatch(setCurrentChatId(chatId))
 
     }
