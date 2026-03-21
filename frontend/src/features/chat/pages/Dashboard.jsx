@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { useChat } from '../hook/useChat'
 import ReactMarkdown from 'react-markdown'
 import './Dashboard.css'
+import UserProfile from './UserProfile'
 
 /* ── Typing dots ── */
 function TypingDots() {
@@ -57,7 +58,6 @@ const Dashboard = () => {
 
   const chats         = useSelector(state => state.chat.chats)
   const currentChatId = useSelector(state => state.chat.currentChatId)
-  const user          = useSelector(state => state.auth.user)
 
   useEffect(() => {
     chat.initializeSocketConnection()
@@ -146,15 +146,7 @@ const Dashboard = () => {
         <div className="dash-sidebar__spacer" />
 
         <div className="dash-sidebar__footer">
-          <div className="dash-sidebar__user">
-            <div className="dash-sidebar__avatar">
-              {user?.name?.[0]?.toUpperCase() || 'U'}
-            </div>
-            <div className="dash-sidebar__user-info">
-              <div className="dash-sidebar__user-name">{user?.name || 'User'}</div>
-              <div className="dash-sidebar__user-role">PREMIUM</div>
-            </div>
-          </div>
+          <UserProfile />
         </div>
       </aside>
 

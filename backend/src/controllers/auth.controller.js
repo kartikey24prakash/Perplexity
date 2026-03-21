@@ -261,3 +261,13 @@ export async function resendVerificationEmail(req, res) {
         success: true
     });
 }
+
+export async function logout(req, res) {
+    res.clearCookie("token", {
+        httpOnly: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
+    })
+    res.status(200).json({ message: "Logged out successfully" })
+}
+ 
