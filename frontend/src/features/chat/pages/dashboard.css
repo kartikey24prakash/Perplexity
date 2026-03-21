@@ -9,8 +9,8 @@
   --dash-b:      rgba(255,255,255,0.07);
   --dash-b2:     rgba(255,255,255,0.13);
   --dash-t:      #ffffff;
-  --dash-t2:     rgb(255, 255, 255);
-  --dash-t3:     rgba(255, 255, 255, 0.849);
+  --dash-t2:     rgba(255,255,255,0.92);
+  --dash-t3:     rgba(255,255,255,0.2);
   --dash-mono:   'JetBrains Mono', ui-monospace, monospace;
   --dash-sans:   ui-sans-serif, system-ui, sans-serif;
 }
@@ -444,4 +444,49 @@
   .dash-messages { padding: 1rem; }
   .dash-empty__title { font-size: 1.2rem; }
   .dash-message--user .dash-message__body { max-width: 85%; }
+}
+
+/* ── DELETE BUTTON ── */
+.dash-sidebar__chat-item {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dash-sidebar__chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  padding: 0.46rem 0.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  min-width: 0;
+}
+
+.dash-sidebar__chat-delete {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 1rem;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 0.35rem;
+  transition: color 0.15s, background 0.15s;
+}
+.dash-sidebar__chat-item:hover .dash-sidebar__chat-delete {
+  display: flex;
+}
+.dash-sidebar__chat-delete:hover {
+  color: #ff5555;
+  background: rgba(255,50,50,0.1);
 }

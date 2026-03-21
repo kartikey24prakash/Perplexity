@@ -1,10 +1,29 @@
 import { initializeSocketConnection } from "../service/chat.socket";
 import { sendMessage, getChats, getMessages, deleteChat } from "../service/chat.api";
-import { setChats, setCurrentChatId, setError, setLoading, createNewChat, addNewMessage, addMessages } from "../chat.slice";
+import { setChats, setCurrentChatId, setError, setLoading, createNewChat, addNewMessage, addMessages, removeChat } from "../chat.slice";
 import { useDispatch } from "react-redux"
 
 export const useChat = () => {
     const dispatch = useDispatch()
+
+    /* ── NEW CHAT ── */
+    function handleNewChat() {
+        dispatch(setCurrentChatId(null))
+    }
+
+    /* ── DELETE CHAT ── */
+    async function handleDeleteChat(chatId, currentChatId, chats) {
+        const data = await deleteChat(chatId)
+        if (!data) return
+
+        dispatch(removeChat(chatId))
+
+        /* if deleted chat was open — switch to next available or null */
+        if (chatId === currentChatId) {
+            const remaining = Object.keys(chats).filter(id => id !== chatId)
+            dispatch(setCurrentChatId(remaining.length > 0 ? remaining[0] : null))
+        }
+    }
 
     async function handleSendMessage({ message, chatId }) {
         dispatch(setLoading(true))
@@ -20,16 +39,8 @@ export const useChat = () => {
             }))
         }
 
-        dispatch(addNewMessage({
-            chatId: resolvedChatId,
-            content: message,
-            role: "user"
-        }))
-        dispatch(addNewMessage({
-            chatId: resolvedChatId,
-            content: aimessage.content,
-            role: aimessage.role
-        }))
+        dispatch(addNewMessage({ chatId: resolvedChatId, content: message,          role: "user"          }))
+        dispatch(addNewMessage({ chatId: resolvedChatId, content: aimessage.content, role: aimessage.role  }))
         dispatch(setCurrentChatId(resolvedChatId))
         dispatch(setLoading(false))
     }
@@ -50,27 +61,25 @@ export const useChat = () => {
         dispatch(setLoading(false))
     }
 
-    async function handleOpenChats(chatId,chats) {
+    async function handleOpenChats(chatId, chats) {
         if (chats[chatId]?.messages.length === 0) {
             const data = await getMessages(chatId)
             const { message } = data
-
             const formattedMessages = message.map(msg => ({
                 content: msg.content,
                 role: msg.role
             }))
-            dispatch(addMessages({
-                chatId,
-                messages: formattedMessages
-            }))
+            dispatch(addMessages({ chatId, messages: formattedMessages }))
         }
         dispatch(setCurrentChatId(chatId))
-
     }
+
     return {
         initializeSocketConnection,
+        handleNewChat,
+        handleDeleteChat,
         handleSendMessage,
         handleGetChats,
-        handleOpenChats
+        handleOpenChats,
     }
 }

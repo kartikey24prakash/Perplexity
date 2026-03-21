@@ -69,7 +69,7 @@ const Dashboard = () => {
   }, [chats, currentChatId])
 
   const currentMessages = chats[currentChatId]?.messages || []
-  const hasMessages     = currentMessages.length > 0
+  const hasMessages     = !!currentChatId && currentMessages.length > 0
 
   const handleSubmit = async (e) => {
     e?.preventDefault()
@@ -105,7 +105,7 @@ const Dashboard = () => {
             <span className="dash-sidebar__mark">◈</span>
             <span className="dash-sidebar__name">PERPLEXITY</span>
           </div>
-          <button className="dash-sidebar__new" onClick={() => chat.handleNewChat?.()}>
+          <button className="dash-sidebar__new" onClick={() => chat.handleNewChat()}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
@@ -119,14 +119,25 @@ const Dashboard = () => {
             <div className="dash-sidebar__section">Recent</div>
             <div className="dash-sidebar__chat-list">
               {Object.values(chats).map(item => (
-                <button
+                <div
                   key={item.id}
                   className={`dash-sidebar__chat-item${item.id === currentChatId ? ' dash-sidebar__chat-item--active' : ''}`}
-                  onClick={() => openChat(item.id)}
                 >
-                  <span className="dash-sidebar__chat-dot" />
-                  <span className="dash-sidebar__chat-title">{item.title || 'New chat'}</span>
-                </button>
+                  <button
+                    className="dash-sidebar__chat-btn"
+                    onClick={() => openChat(item.id)}
+                  >
+                    <span className="dash-sidebar__chat-dot" />
+                    <span className="dash-sidebar__chat-title">{item.title || 'New chat'}</span>
+                  </button>
+                  <button
+                    className="dash-sidebar__chat-delete"
+                    onClick={(e) => { e.stopPropagation(); chat.handleDeleteChat(item.id, currentChatId, chats) }}
+                    title="Delete chat"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           </>
