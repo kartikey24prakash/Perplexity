@@ -1,0 +1,175 @@
+/* ── Triple Terminal ──────────────────────────────────
+   Fixed height — content scrolls inside, no layout shift
+   Responsive: 3-col → 1-col on mobile
+──────────────────────────────────────────────────── */
+
+.tt-wrap {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: transparent;
+  width: 100%;
+  /* fixed height — NEVER grows */
+  height: 340px;
+}
+
+/* ── single terminal ── */
+.tt-term {
+  background: #080808;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 4px;
+}
+
+/* ── title bar ── */
+.tt-bar {
+  display: flex;
+  align-items: center;
+  gap: .32rem;
+  padding: .48rem .7rem;
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;     /* bar never shrinks */
+}
+
+.tt-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.tt-r   { background: #ff5f57; }
+.tt-y   { background: #ffbd2e; }
+.tt-g   { background: #28c840; }
+
+.tt-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .5rem;
+  letter-spacing: .1em;
+  color: rgba(255,255,255,.25);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .42rem;
+  letter-spacing: .1em;
+  font-weight: 600;
+  padding: .16rem .45rem;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.tt-badge-code { background: rgba(0,255,136,.1);  color: #00ff88; }
+.tt-badge-err  { background: rgba(255,60,60,.1);  color: #ff4444; }
+.tt-badge-ai   { background: rgba(124,143,255,.12); color: #7c8fff; }
+
+/* ── body — fixed, overflow hidden, no scroll bar ── */
+.tt-body {
+  flex: 1;
+  padding: .6rem .7rem;
+  overflow: hidden;   /* content clips — js removes oldest lines */
+  display: flex;
+  flex-direction: column;
+  gap: .18rem;
+  min-height: 0;      /* flex child can shrink */
+}
+
+/* ── line types ── */
+.tt-ln {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .58rem;
+  line-height: 1.5;
+  white-space: pre;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.tt-cm   { color: rgba(255,255,255,.22); }
+.tt-kw   { color: #c084fc; }
+.tt-fn   { color: #60a5fa; }
+.tt-str  { color: #86efac; }
+.tt-sy   { color: rgba(255,255,255,.48); }
+.tt-yw   { color: #fde68a; }
+.tt-dim  { color: rgba(255,255,255,.08); min-height: .6rem; }
+.tt-err  { color: #ff4444; background: rgba(255,0,0,.06);     padding: 0 .25rem; border-left: 2px solid #ff4444;  }
+.tt-warn { color: #fbbf24; background: rgba(251,191,36,.05);  padding: 0 .25rem; border-left: 2px solid #fbbf24; }
+.tt-fix  { color: #00ff88; background: rgba(0,255,136,.06);   padding: 0 .25rem; border-left: 2px solid #00ff88; }
+.tt-ai   { color: #7c8fff; background: rgba(124,143,255,.07); padding: 0 .25rem; border-left: 2px solid #7c8fff; }
+
+/* blinking caret on last line */
+.tt-caret::after {
+  content: '▌';
+  animation: tt-blink .75s step-end infinite;
+  color: rgba(255,255,255,.6);
+  font-size: .55rem;
+}
+@keyframes tt-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── status bar ── */
+.tt-status {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .32rem .7rem;
+  background: rgba(255,255,255,.03);
+  border-top: 1px solid rgba(255,255,255,.06);
+  flex-shrink: 0;
+}
+
+.tt-sdot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tt-stxt {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .46rem;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,.2);
+  white-space: nowrap;
+}
+
+.tt-sval {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: .46rem;
+  letter-spacing: .06em;
+  margin-left: auto;
+  white-space: nowrap;
+  transition: color .3s;
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════ */
+
+/* tablet — stack to 1 col, each terminal shorter */
+@media (max-width: 900px) {
+  .tt-wrap {
+    grid-template-columns: 1fr;
+    height: auto;
+    gap: 10px;
+  }
+  .tt-term {
+    height: 260px;
+  }
+  .tt-ln {
+    font-size: .54rem;
+  }
+}
+
+/* mobile */
+@media (max-width: 640px) {
+  .tt-term {
+    height: 260px;
+  }
+  .tt-ln    { font-size: .52rem; }
+  .tt-title { font-size: .46rem; }
+  .tt-badge { font-size: .38rem; }
+  .tt-stxt, .tt-sval { font-size: .42rem; }
+}

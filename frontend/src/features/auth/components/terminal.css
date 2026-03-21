@@ -1,0 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+.term-wrap {
+  width: 100%;
+  background: #0d0d0d;
+  border: 1px solid rgba(255,255,255,0.1);
+  display: flex;
+  flex-direction: column;
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+}
+
+/* Header */
+.term-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: #111;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-wrap: wrap;
+}
+
+.term-dots {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.term-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.td-red    { background: #ff5f56; }
+.td-yellow { background: #ffbd2e; }
+.td-green  { background: #27c93f; }
+
+.term-filename {
+  font-size: 0.65rem;
+  color: rgba(255,255,255,0.4);
+  letter-spacing: 0.08em;
+  flex-shrink: 0;
+}
+
+.term-tabs {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: auto;
+}
+
+.term-tab {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  color: rgba(255,255,255,0.28);
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.term-tab:hover {
+  color: rgba(255,255,255,0.6);
+  border-color: rgba(255,255,255,0.2);
+}
+
+.term-tab-on {
+  color: #fff !important;
+  border-color: rgba(255,255,255,0.4) !important;
+  background: rgba(255,255,255,0.05) !important;
+}
+
+/* Code body */
+.term-body {
+  padding: 1.25rem 1rem;
+  min-height: 320px;
+  overflow: hidden;
+}
+
+.term-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.term-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  min-height: 1.5rem;
+  line-height: 1.5;
+}
+
+.term-ln {
+  font-size: 0.6rem;
+  color: rgba(255,255,255,0.15);
+  width: 1.6rem;
+  flex-shrink: 0;
+  user-select: none;
+  padding-top: 0.05rem;
+}
+
+.term-code {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+/* Syntax colors */
+.c-import  { color: #a78bfa; }  /* purple - imports */
+.c-fn      { color: #60a5fa; }  /* blue - functions/brackets */
+.c-prop    { color: #86efac; }  /* green - properties */
+.c-string  { color: #fca5a5; }  /* red/pink - strings */
+.c-default { color: rgba(255,255,255,0.75); }
+
+/* Blinking cursor */
+.term-cursor {
+  animation: blink 0.7s step-end infinite;
+  color: #fff;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Status bar */
+.term-status {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.4rem 1rem;
+  background: #111;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.term-status-lang {
+  font-size: 0.58rem;
+  color: #60a5fa;
+  letter-spacing: 0.1em;
+  background: rgba(96,165,250,0.1);
+  padding: 0.15rem 0.45rem;
+  border: 1px solid rgba(96,165,250,0.2);
+}
+
+.term-status-file {
+  font-size: 0.58rem;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 0.06em;
+}
+
+.term-status-lines {
+  font-size: 0.58rem;
+  color: rgba(255,255,255,0.18);
+  margin-left: auto;
+  letter-spacing: 0.06em;
+}
+
+.term-status-done {
+  font-size: 0.58rem;
+  color: #27c93f;
+  letter-spacing: 0.08em;
+}
