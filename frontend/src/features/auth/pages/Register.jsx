@@ -160,7 +160,7 @@ export default function Register() {
       <div className="lp-nav-wrap">
         <nav className="lp-nav">
           <div className="lp-brand">
-            <span className="lp-mark">◈</span>
+            {/* <span className="lp-mark">◈</span> */}
             <span className="lp-name">PERPLEXITY</span>
           </div>
           <div className="lp-sep" />
