@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import { Navigate } from 'react-router'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
-import './login.css'
+import './Login.css'
 import TripleTerminal from './TripleTerminal'
 
 gsap.registerPlugin(ScrollTrigger)
