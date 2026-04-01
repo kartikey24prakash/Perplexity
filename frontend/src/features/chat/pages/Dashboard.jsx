@@ -8,6 +8,10 @@ import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import './dashboard.css'
 import UserProfile from './UserProfile'
 
+function tokenizeForReveal(text) {
+  return text.match(/\S+\s*|\n/g) || []
+}
+
 /* ── Typing dots ── */
 function TypingDots() {
   return (
@@ -140,18 +144,71 @@ function CodeBlock({ node, inline, className, children, ...props }) {
 }
 
 /* ── Single message ── */
-function Message({ message }) {
+function AnimatedAiContent({ content, animate }) {
+  const [displayContent, setDisplayContent] = useState(animate ? '' : content)
+  const [isComplete, setIsComplete] = useState(!animate)
+
+  useEffect(() => {
+    if (!animate) {
+      setDisplayContent(content)
+      setIsComplete(true)
+      return
+    }
+
+    const tokens = tokenizeForReveal(content)
+    let index = 0
+
+    setDisplayContent('')
+    setIsComplete(false)
+
+    const timer = window.setInterval(() => {
+      index += 1
+      setDisplayContent(tokens.slice(0, index).join(''))
+
+      if (index >= tokens.length) {
+        window.clearInterval(timer)
+        setIsComplete(true)
+      }
+    }, 28)
+
+    return () => window.clearInterval(timer)
+  }, [animate, content])
+
+  if (!isComplete) {
+    return (
+      <div className="dash-message__streaming">
+        {displayContent}
+        <span className="dash-message__cursor" />
+      </div>
+    )
+  }
+
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{ code: CodeBlock }}
+    >
+      {content}
+    </ReactMarkdown>
+  )
+}
+
+function Message({ message, animate = false }) {
   const isUser = message.role === 'user'
   return (
     <div className={`dash-message dash-message--${isUser ? 'user' : 'ai'}`}>
       {!isUser && <div className="dash-message__label">PERPLEXITY</div>}
       <div className="dash-message__body">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{ code: CodeBlock }}
-        >
-          {message.content}
-        </ReactMarkdown>
+        {isUser ? (
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{ code: CodeBlock }}
+          >
+            {message.content}
+          </ReactMarkdown>
+        ) : (
+          <AnimatedAiContent content={message.content} animate={animate} />
+        )}
       </div>
       <div className="dash-message__meta">
         {message.timestamp && (
@@ -196,6 +253,7 @@ const Dashboard = () => {
   const [error, setError] = useState(null)
   const [usage, setUsage] = useState(null)
   const [usageOpen, setUsageOpen] = useState(false)
+  const [streamingMessageKey, setStreamingMessageKey] = useState(null)
   const messagesEndRef = useRef(null)
   const composerRef = useRef(null)
 
@@ -235,6 +293,10 @@ const Dashboard = () => {
 
   const currentMessages = chats[currentChatId]?.messages || []
   const hasMessages     = !!currentChatId && currentMessages.length > 0
+  const latestAiIndex = [...currentMessages]
+    .map((message, index) => ({ message, index }))
+    .filter(({ message }) => message.role === 'ai')
+    .at(-1)?.index ?? -1
 
   const handleSubmit = async (e) => {
     e?.preventDefault()
@@ -245,6 +307,9 @@ const Dashboard = () => {
     setError(null)
     try {
       const data = await chat.handleSendMessage({ message: trimmed, chatId: currentChatId })
+      if (data?.aimessage?.content) {
+        setStreamingMessageKey(data.aimessage.content)
+      }
       if (data?.usage) {
         setUsage(prev => ({
           ...prev,
@@ -264,6 +329,9 @@ const Dashboard = () => {
     setError(null)
     try {
       const data = await chat.handleSendMessage({ message: msg, chatId: currentChatId })
+      if (data?.aimessage?.content) {
+        setStreamingMessageKey(data.aimessage.content)
+      }
       if (data?.usage) {
         setUsage(prev => ({
           ...prev,
@@ -374,13 +442,35 @@ const Dashboard = () => {
 
       {/* ── MAIN ── */}
       <div className="dash-main">
+        {usage && (
+          <div className="dash-main__usage">
+            <div className="dash-usage">
+              <button className="dash-usage__toggle" onClick={() => setUsageOpen(prev => !prev)}>
+                <span className="dash-usage__label">Usage</span>
+                <span className="dash-usage__summary">{usage.dailyRemaining}/{usage.dailyLimit} left today</span>
+                <span className="dash-usage__chevron">{usageOpen ? '-' : '+'}</span>
+              </button>
+              {usageOpen && (
+                <div className="dash-usage__panel">
+                  <p className="dash-usage__copy">{usage.message}</p>
+                  <p className="dash-usage__detail">Hourly remaining: {usage.hourlyRemaining}/{usage.hourlyLimit}</p>
+                  <p className="dash-usage__detail">Daily remaining: {usage.dailyRemaining}/{usage.dailyLimit}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
         <div className="dash-content">
           {!hasMessages ? (
             <EmptyState onChipClick={handleChipClick} />
           ) : (
             <div className="dash-messages">
               {currentMessages.map((message, i) => (
-                <Message key={i} message={message} />
+                <Message
+                  key={i}
+                  message={message}
+                  animate={i === latestAiIndex && message.role === 'ai' && message.content === streamingMessageKey}
+                />
               ))}
               {isTyping && (
                 <div className="dash-message dash-message--ai">

@@ -264,6 +264,7 @@
   overflow: hidden;
   /* push content right to avoid toggle button overlap */
   padding-top: 0;
+  position: relative;
 }
 
 .dash-content {
@@ -271,6 +272,13 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+.dash-main__usage {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  z-index: 5;
 }
 
 /* ── EMPTY STATE ── */
@@ -382,6 +390,26 @@
   font-size: 0.8rem;
 }
 
+.dash-message__streaming {
+  white-space: pre-wrap;
+}
+
+.dash-message__cursor {
+  display: inline-block;
+  width: 0.55ch;
+  height: 1.05em;
+  margin-left: 0.08rem;
+  vertical-align: -0.12em;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.72);
+  animation: dash-cursor-blink 0.9s steps(1) infinite;
+}
+
+@keyframes dash-cursor-blink {
+  0%, 45% { opacity: 1; }
+  46%, 100% { opacity: 0; }
+}
+
 /* ── TYPING ── */
 .dash-typing {
   display: flex;
@@ -412,9 +440,13 @@
 .dash-usage {
   width: fit-content;
   max-width: 260px;
-  margin: 0 0 -0.85rem auto;
+  margin: 0;
   position: relative;
   z-index: 2;
+}
+
+.dash-searchbar > .dash-usage {
+  display: none;
 }
 
 .dash-usage__toggle {
@@ -466,7 +498,7 @@
   padding: 0.85rem 0.95rem;
   position: absolute;
   right: 0;
-  bottom: calc(100% + 0.45rem);
+  top: calc(100% + 0.45rem);
   width: 260px;
   box-shadow: 0 18px 40px rgba(0,0,0,0.38);
 }
