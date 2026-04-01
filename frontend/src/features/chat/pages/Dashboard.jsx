@@ -367,7 +367,6 @@ const Dashboard = () => {
           </div>
         )}
 
-        <div className="dash-sidebar__spacer" />
         <div className="dash-sidebar__footer">
           <UserProfile />
         </div>
@@ -430,10 +429,6 @@ const Dashboard = () => {
               rows={1}
               placeholder="Message Perplexity..."
             />
-            <div className="dash-searchbar__meta">
-              <span className="dash-searchbar__hint">Enter to send, Shift+Enter for newline</span>
-              <span className="dash-searchbar__count">{chatInput.length}/{MAX_MESSAGE_LENGTH}</span>
-            </div>
             <button
               className="dash-searchbar__button"
               disabled={!chatInput.trim() || chatInput.trim().length > MAX_MESSAGE_LENGTH || isTyping || chatLoading}
@@ -456,6 +451,10 @@ const Dashboard = () => {
               </svg>
               )}
             </button>
+          </div>
+          <div className="dash-searchbar__meta">
+            <span className="dash-searchbar__hint">Enter to send, Shift+Enter for newline</span>
+            <span className="dash-searchbar__count">{chatInput.length}/{MAX_MESSAGE_LENGTH}</span>
           </div>
         </div>
       </div>
