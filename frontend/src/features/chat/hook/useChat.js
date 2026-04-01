@@ -60,6 +60,7 @@ export const useChat = () => {
                     title: chat.title,
                     messages: [],
                     lastUpdated: chat.updatedAt,
+                    preview: "Open to continue this conversation",
                 }
                 return acc
             }, {})))

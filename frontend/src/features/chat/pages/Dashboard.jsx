@@ -79,6 +79,17 @@ function formatTime(timestamp) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+function formatSidebarTime(timestamp) {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const sameDay = date.toDateString() === now.toDateString()
+  if (sameDay) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' })
+}
+
 /* ── Code block renderer ── */
 function CodeBlock({ node, inline, className, children, ...props }) {
   const match = /language-(\w+)/.exec(className || '')
@@ -176,6 +187,7 @@ function EmptyState({ onChipClick }) {
 
 /* ── Main Dashboard ── */
 const Dashboard = () => {
+  const MAX_MESSAGE_LENGTH = 4000
   const chat              = useChat()
   const [chatInput,     setChatInput]     = useState('')
   const [isTyping,      setIsTyping]      = useState(false)
@@ -183,10 +195,13 @@ const Dashboard = () => {
   const [chatsLoading,  setChatsLoading]  = useState(true)
   const [error, setError] = useState(null)
   const [usage, setUsage] = useState(null)
+  const [usageOpen, setUsageOpen] = useState(false)
   const messagesEndRef = useRef(null)
+  const composerRef = useRef(null)
 
   const chats         = useSelector(state => state.chat.chats)
   const currentChatId = useSelector(state => state.chat.currentChatId)
+  const chatLoading   = useSelector(state => state.chat.isLoading)
 
   useEffect(() => {
     if (window.innerWidth < 768) setSidebarOpen(false)
@@ -212,13 +227,19 @@ const Dashboard = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chats, currentChatId])
 
+  useEffect(() => {
+    if (!composerRef.current) return
+    composerRef.current.style.height = '0px'
+    composerRef.current.style.height = `${Math.min(composerRef.current.scrollHeight, 180)}px`
+  }, [chatInput])
+
   const currentMessages = chats[currentChatId]?.messages || []
   const hasMessages     = !!currentChatId && currentMessages.length > 0
 
   const handleSubmit = async (e) => {
     e?.preventDefault()
     const trimmed = chatInput.trim()
-    if (!trimmed) return
+    if (!trimmed || trimmed.length > MAX_MESSAGE_LENGTH) return
     setChatInput('')
     setIsTyping(true)
     setError(null)
@@ -258,7 +279,10 @@ const Dashboard = () => {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && chatInput.trim()) handleSubmit()
+    if (e.key === 'Enter' && !e.shiftKey && chatInput.trim()) {
+      e.preventDefault()
+      handleSubmit()
+    }
   }
 
   const openChat = (chatId) => {
@@ -325,7 +349,11 @@ const Dashboard = () => {
               >
                 <button className="dash-sidebar__chat-btn" onClick={() => openChat(item.id)}>
                   <span className="dash-sidebar__chat-dot" />
-                  <span className="dash-sidebar__chat-title">{item.title || 'New chat'}</span>
+                  <span className="dash-sidebar__chat-copy">
+                    <span className="dash-sidebar__chat-title">{item.title || 'New chat'}</span>
+                    <span className="dash-sidebar__chat-preview">{item.preview || 'Open to continue this conversation'}</span>
+                  </span>
+                  <span className="dash-sidebar__chat-time">{formatSidebarTime(item.lastUpdated)}</span>
                 </button>
                 <button
                   className="dash-sidebar__chat-delete"
@@ -376,27 +404,45 @@ const Dashboard = () => {
 
         <div className="dash-searchbar">
           {usage && (
-            <div className="dash-error" style={{ marginBottom: '0.8rem' }}>
-              <span className="dash-error__icon">i</span>
-              <span className="dash-error__text">
-                {usage.message} Free usage: {usage.hourlyRemaining}/{usage.hourlyLimit} left this hour, {usage.dailyRemaining}/{usage.dailyLimit} left today.
-              </span>
+            <div className="dash-usage">
+              <button className="dash-usage__toggle" onClick={() => setUsageOpen(prev => !prev)}>
+                <span className="dash-usage__label">Usage limits</span>
+                <span className="dash-usage__summary">{usage.dailyRemaining}/{usage.dailyLimit} left today</span>
+                <span className="dash-usage__chevron">{usageOpen ? '−' : '+'}</span>
+              </button>
+              {usageOpen && (
+                <div className="dash-usage__panel">
+                  <p className="dash-usage__copy">{usage.message}</p>
+                  <p className="dash-usage__detail">Hourly remaining: {usage.hourlyRemaining}/{usage.hourlyLimit}</p>
+                  <p className="dash-usage__detail">Daily remaining: {usage.dailyRemaining}/{usage.dailyLimit}</p>
+                </div>
+              )}
             </div>
           )}
           <div className="dash-searchbar__box">
-            <input
-              className="dash-searchbar__input"
-              type="text"
+            <textarea
+              ref={composerRef}
+              className="dash-searchbar__input dash-searchbar__textarea"
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              maxLength={MAX_MESSAGE_LENGTH}
+              rows={1}
               placeholder="Message Perplexity..."
             />
+            <div className="dash-searchbar__meta">
+              <span className="dash-searchbar__hint">Enter to send, Shift+Enter for newline</span>
+              <span className="dash-searchbar__count">{chatInput.length}/{MAX_MESSAGE_LENGTH}</span>
+            </div>
             <button
               className="dash-searchbar__button"
-              disabled={!chatInput.trim()}
+              disabled={!chatInput.trim() || chatInput.trim().length > MAX_MESSAGE_LENGTH || isTyping || chatLoading}
               onClick={handleSubmit}
+              title={isTyping || chatLoading ? 'Sending...' : 'Send message'}
             >
+              {isTyping || chatLoading ? (
+                <span className="dash-searchbar__spinner" />
+              ) : (
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -408,6 +454,7 @@ const Dashboard = () => {
                 <line x1="5" y1="12" x2="19" y2="12" />
                 <polyline points="12 5 19 12 12 19" />
               </svg>
+              )}
             </button>
           </div>
         </div>

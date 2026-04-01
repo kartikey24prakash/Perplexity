@@ -16,6 +16,7 @@ const chatSlice = createSlice({
                 title,
                 messages: [],
                 lastUpdated: new Date().toISOString(),
+                preview: "New conversation",
             }
         },
         removeChat: (state, action) => {
@@ -28,10 +29,16 @@ const chatSlice = createSlice({
                 role,
                 timestamp: new Date().toISOString()
             })
+            state.chats[chatId].lastUpdated = new Date().toISOString()
+            state.chats[chatId].preview = content.slice(0, 90)
         },
         addMessages: (state, action) => {
             const { chatId, messages } = action.payload
             state.chats[chatId].messages.push(...messages)
+            const lastMessage = messages[messages.length - 1]
+            if (lastMessage) {
+                state.chats[chatId].preview = lastMessage.content.slice(0, 90)
+            }
         },
         setChats: (state, action) => {
             state.chats = action.payload
