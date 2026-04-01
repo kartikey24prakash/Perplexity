@@ -136,18 +136,24 @@ export default function Register() {
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [focused,  setFocused]  = useState(null)
+  const [registered, setRegistered] = useState(false)
 
   const user    = useSelector(s => s.auth.user)
   const loading = useSelector(s => s.auth.loading)
-  const { handleRegister } = useAuth()
+  const error = useSelector(s => s.auth.error)
+  const { handleRegister, clearAuthError } = useAuth()
   const navigate = useNavigate()
   const typed = useTypewriter(['Join the Revolution.\nSearch Smarter.', 'Create Account.\nGet Started.'])
   useScrollAnimations()
 
   const submit = async e => {
     e.preventDefault()
-    await handleRegister({ username, email, password })
-    navigate('/')
+    setRegistered(false)
+    const success = await handleRegister({ username, email, password })
+    if (success) {
+      setRegistered(true)
+      setTimeout(() => navigate('/login'), 900)
+    }
   }
 
   if (!loading && user) return <Navigate to="/" replace />
@@ -205,22 +211,28 @@ export default function Register() {
             <div className="lp-beam" />
             <div className={`lp-card${focused?' glow':''}`}>
               <form onSubmit={submit} className="lp-form">
+                <div className="lp-alert lp-alert-info">
+                  Email verification is temporarily off. Register now and sign in right away.
+                </div>
+                {registered && <div className="lp-alert lp-alert-success">Account created. Redirecting you to login...</div>}
+                {error && <div className="lp-alert lp-alert-error">{error}</div>}
                 <div className={`lp-field${focused==='un'?' on':''}`}>
                   <label className="lp-label">USERNAME</label>
                   <input className="lp-input" type="text" value={username} required placeholder="Choose a username"
-                    onFocus={() => setFocused('un')} onBlur={() => setFocused(null)} onChange={e => setUsername(e.target.value)} />
+                    onFocus={() => { setFocused('un'); clearAuthError() }} onBlur={() => setFocused(null)} onChange={e => setUsername(e.target.value)} />
                 </div>
                 <div className={`lp-field${focused==='em'?' on':''}`}>
                   <label className="lp-label">EMAIL</label>
                   <input className="lp-input" type="email" value={email} required placeholder="you@example.com"
-                    onFocus={() => setFocused('em')} onBlur={() => setFocused(null)} onChange={e => setEmail(e.target.value)} />
+                    onFocus={() => { setFocused('em'); clearAuthError() }} onBlur={() => setFocused(null)} onChange={e => setEmail(e.target.value)} />
                 </div>
                 <div className={`lp-field${focused==='pw'?' on':''}`}>
                   <label className="lp-label">PASSWORD</label>
                   <input className="lp-input" type="password" value={password} required placeholder="Create a strong password"
-                    onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)} onChange={e => setPassword(e.target.value)} />
+                    onFocus={() => { setFocused('pw'); clearAuthError() }} onBlur={() => setFocused(null)} onChange={e => setPassword(e.target.value)} />
                 </div>
-                <button type="submit" className="lp-btn">CREATE ACCOUNT <span className="lp-btn-arr">→</span></button>
+                <button type="submit" className="lp-btn" disabled={loading}>{loading ? 'CREATING ACCOUNT...' : 'CREATE ACCOUNT'} <span className="lp-btn-arr">{'->'}</span></button>
+                <p className="lp-form-meta">No verification email for now. Register, then sign in.</p>
               </form>
               <div className="lp-stack">
                 <span className="lp-sdot" />
@@ -296,7 +308,7 @@ export default function Register() {
           <p className="lp-sect-ey">// ALREADY HAVE AN ACCOUNT?</p>
           <h2 className="lp-cta-h">Been here before?<br /><em>Sign back in.</em></h2>
           <p className="lp-cta-sub">Your history is waiting for you.</p>
-          <Link to="/login" className="lp-cta-btn">SIGN IN →</Link>
+          <Link to="/login" className="lp-cta-btn">SIGN IN {'->'}</Link>
         </section>
       </div>
 

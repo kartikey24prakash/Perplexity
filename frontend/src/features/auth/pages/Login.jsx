@@ -152,15 +152,18 @@ export default function Login() {
 
   const user    = useSelector(s => s.auth.user)
   const loading = useSelector(s => s.auth.loading)
-  const { handleLogin } = useAuth()
+  const error = useSelector(s => s.auth.error)
+  const { handleLogin, clearAuthError } = useAuth()
   const navigate = useNavigate()
   const typed = useTypewriter(['Ask Anything.\nGet Truth.', 'Search Smarter.\nThink Deeper.'])
   useScrollAnimations()
 
   const submit = async e => {
     e.preventDefault()
-    await handleLogin({ email, password })
-    navigate('/')
+    const success = await handleLogin({ email, password })
+    if (success) {
+      navigate('/')
+    }
   }
 
   if (!loading && user) return <Navigate to="/" replace />
@@ -218,22 +221,24 @@ export default function Login() {
             <div className={`lp-card${focused?' glow':''}`}>
               {tab === 'login' ? (
                 <form onSubmit={submit} className="lp-form">
+                  {error && <div className="lp-alert lp-alert-error">{error}</div>}
                   <div className={`lp-field${focused==='em'?' on':''}`}>
                     <label className="lp-label">EMAIL</label>
                     <input className="lp-input" type="email" value={email} required placeholder="you@example.com"
-                      onFocus={() => setFocused('em')} onBlur={() => setFocused(null)} onChange={e => setEmail(e.target.value)} />
+                      onFocus={() => { setFocused('em'); clearAuthError() }} onBlur={() => setFocused(null)} onChange={e => setEmail(e.target.value)} />
                   </div>
                   <div className={`lp-field${focused==='pw'?' on':''}`}>
                     <label className="lp-label">PASSWORD</label>
                     <input className="lp-input" type="password" value={password} required placeholder="Enter your password"
-                      onFocus={() => setFocused('pw')} onBlur={() => setFocused(null)} onChange={e => setPassword(e.target.value)} />
+                      onFocus={() => { setFocused('pw'); clearAuthError() }} onBlur={() => setFocused(null)} onChange={e => setPassword(e.target.value)} />
                   </div>
-                  <button type="submit" className="lp-btn">LOGIN <span className="lp-btn-arr">→</span></button>
+                  <button type="submit" className="lp-btn" disabled={loading}>{loading ? 'SIGNING IN...' : 'LOGIN'} <span className="lp-btn-arr">{'->'}</span></button>
+                  <p className="lp-form-meta">Sign in with the account you just created.</p>
                 </form>
               ) : (
                 <div className="lp-form" style={{ textAlign:'center', padding:'.5rem 0' }}>
                   <p style={{ fontSize:'.82rem', color:'rgba(255,255,255,.4)' }}>
-                    Go to the <Link to="/register" style={{ color:'#fff', fontWeight:600 }}>Register page →</Link>
+                    Go to the <Link to="/register" style={{ color:'#fff', fontWeight:600 }}>Register page {'->'}</Link>
                   </p>
                 </div>
               )}
