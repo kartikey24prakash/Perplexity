@@ -2,6 +2,13 @@ import userModel from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 // import { sendEmail } from "../services/mail.service.js";
 
+const isProduction = process.env.NODE_ENV === "production";
+const cookieOptions = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+};
+
 
 /**
  * @desc Register a new user
@@ -114,7 +121,7 @@ export async function login(req, res) {
         username: user.username,
     }, process.env.JWT_SECRET, { expiresIn: '7d' })
 
-    res.cookie("token", token)
+    res.cookie("token", token, cookieOptions)
 
     res.status(200).json({
         message: "Login successful",
@@ -279,11 +286,7 @@ export async function resendVerificationEmail(req, res) {
 }
 
 export async function logout(req, res) {
-    res.clearCookie("token", {
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-    })
+    res.clearCookie("token", cookieOptions)
     res.status(200).json({ message: "Logged out successfully" })
 }
  
