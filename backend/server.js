@@ -5,7 +5,7 @@ import connectDB from "./src/config/database.js";
 import  http from "http";
 import { initSocket } from "./src/sockets/server.socket.js";
 
-const PORT = process.env.PORT || 8000;
+const PORT = process.env.PORT || 3000;
 
 const httpServer = http.createServer(app)
 initSocket(httpServer)

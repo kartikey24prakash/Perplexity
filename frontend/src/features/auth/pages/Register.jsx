@@ -193,7 +193,8 @@ export default function Register() {
         </h1>
         <p className="lp-desc">
           Enterprise-grade AI search, free to start.<br />
-          Source-grounded answers. Zero hallucinations.
+          Source-grounded answers. Zero hallucinations.<br />
+          Email verification temporarily off.
         </p>
         <div className="lp-form-wrap">
           <div className="lp-tabs">

@@ -6,6 +6,7 @@ import chatRouter from "./routes/chat.routes.js";
 
 import cors from "cors";
 const app = express();
+const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
 // Middleware
 app.use(express.json());
@@ -14,7 +15,7 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: clientUrl,
     credentials: true,
     methods: [ "GET", "POST", "PUT", "DELETE" ],
 }))
