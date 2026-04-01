@@ -20,6 +20,11 @@ export const getMessages = async(chatId)=>{
     return response.data
 }
 
+export const getUsageLimits = async ()=>{
+    const response = await api.get("/api/chats/usage/limits")
+    return response.data
+}
+
 export const deleteChat = async(chatId)=>{
     const response = await api.delete(`/api/chats/delete/${chatId}`)
     return response.data

@@ -2,8 +2,15 @@ import { Router } from "express";
 import { register, verifyEmail, login, getMe , resendVerificationEmail,logout} from "../controllers/auth.controller.js";
 import { registerValidator, loginValidator } from "../validators/auth.validator.js";
 import { authUser } from "../middleware/auth.middleware.js";
+import { createRateLimit } from "../middleware/rate-limit.middleware.js";
+import { AUTH_LIMIT_MAX_REQUESTS, AUTH_LIMIT_WINDOW_MS } from "../config/limits.js";
 
 const authRouter = Router();
+const authRateLimit = createRateLimit({
+    windowMs: AUTH_LIMIT_WINDOW_MS,
+    maxRequests: AUTH_LIMIT_MAX_REQUESTS,
+    message: "Too many authentication attempts. Please wait a few minutes and try again.",
+});
 
 /**
  * @route POST /api/auth/register
@@ -11,7 +18,7 @@ const authRouter = Router();
  * @access Public
  * @body { username, email, password }
  */
-authRouter.post("/register", registerValidator, register);
+authRouter.post("/register", authRateLimit, registerValidator, register);
 
 
 /**
@@ -20,7 +27,7 @@ authRouter.post("/register", registerValidator, register);
  * @access Public
  * @body { email, password }
  */
-authRouter.post("/login", loginValidator, login)
+authRouter.post("/login", authRateLimit, loginValidator, login)
 
 
 

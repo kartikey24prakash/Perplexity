@@ -8,6 +8,8 @@ import cors from "cors";
 const app = express();
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
+app.set("trust proxy", 1);
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

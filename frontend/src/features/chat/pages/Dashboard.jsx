@@ -182,6 +182,7 @@ const Dashboard = () => {
   const [sidebarOpen,   setSidebarOpen]   = useState(true)
   const [chatsLoading,  setChatsLoading]  = useState(true)
   const [error, setError] = useState(null)
+  const [usage, setUsage] = useState(null)
   const messagesEndRef = useRef(null)
 
   const chats         = useSelector(state => state.chat.chats)
@@ -196,6 +197,12 @@ const Dashboard = () => {
       chat.initializeSocketConnection()
       setChatsLoading(true)
       await chat.handleGetChats()
+      try {
+        const usageData = await chat.handleGetUsageLimits()
+        setUsage(usageData.usage)
+      } catch {
+        /* ignore usage fetch failures */
+      }
       setChatsLoading(false)
     }
     init()
@@ -216,7 +223,14 @@ const Dashboard = () => {
     setIsTyping(true)
     setError(null)
     try {
-      await chat.handleSendMessage({ message: trimmed, chatId: currentChatId })
+      const data = await chat.handleSendMessage({ message: trimmed, chatId: currentChatId })
+      if (data?.usage) {
+        setUsage(prev => ({
+          ...prev,
+          ...data.usage,
+          message: 'AI services are limited because of cost.',
+        }))
+      }
     } catch (err) {
       setError(err?.response?.data?.message || 'Something went wrong. Please try again.')
     } finally {
@@ -228,7 +242,14 @@ const Dashboard = () => {
     setIsTyping(true)
     setError(null)
     try {
-      await chat.handleSendMessage({ message: msg, chatId: currentChatId })
+      const data = await chat.handleSendMessage({ message: msg, chatId: currentChatId })
+      if (data?.usage) {
+        setUsage(prev => ({
+          ...prev,
+          ...data.usage,
+          message: 'AI services are limited because of cost.',
+        }))
+      }
     } catch (err) {
       setError(err?.response?.data?.message || 'Something went wrong. Please try again.')
     } finally {
@@ -354,6 +375,14 @@ const Dashboard = () => {
         )}
 
         <div className="dash-searchbar">
+          {usage && (
+            <div className="dash-error" style={{ marginBottom: '0.8rem' }}>
+              <span className="dash-error__icon">i</span>
+              <span className="dash-error__text">
+                {usage.message} Free usage: {usage.hourlyRemaining}/{usage.hourlyLimit} left this hour, {usage.dailyRemaining}/{usage.dailyLimit} left today.
+              </span>
+            </div>
+          )}
           <div className="dash-searchbar__box">
             <input
               className="dash-searchbar__input"
